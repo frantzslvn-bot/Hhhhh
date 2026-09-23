@@ -1,0 +1,123 @@
+<%- include('partials/header', { title: 'Épisodes' }) %>
+<a href="/admin" class="muted">← Retour</a>
+<h1>Épisodes : <%= anime.title %></h1>
+
+<% if (error) { %><p class="error"><%= error %></p><% } %>
+<p class="error" id="upload-error" style="display:none"></p>
+
+<form id="upload-form" class="auth-form wide" enctype="multipart/form-data">
+  <input type="number" name="number" placeholder="Numéro de l'épisode" required>
+  <input name="title" placeholder="Titre (optionnel)">
+  <label class="muted small">Vidéo au format MP4 (H.264 + AAC), 2 Go max</label>
+  <input type="file" name="video" id="video-input" accept="video/mp4" required>
+
+  <div id="preview" style="display:none">
+    <video id="preview-video" class="preview-video" controls playsinline muted></video>
+    <p class="muted small" id="file-info"></p>
+  </div>
+
+  <div id="progress-box" style="display:none">
+    <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+    <p class="small" id="progress-text">0 %</p>
+  </div>
+
+  <button class="btn" id="upload-btn">Uploader l'épisode</button>
+</form>
+
+<table class="table">
+  <tr><th>#</th><th>Titre</th><th></th></tr>
+  <% episodes.forEach(e => { %>
+    <tr>
+      <td><%= e.number %></td>
+      <td><%= e.title || '-' %></td>
+      <td>
+        <form method="POST" action="/admin/episode/<%= e.id %>/delete" onsubmit="return confirm('Supprimer cet épisode ?')">
+          <button class="link-danger">Supprimer</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+</table>
+
+<script>
+  const form = document.getElementById('upload-form');
+  const input = document.getElementById('video-input');
+  const preview = document.getElementById('preview');
+  const previewVideo = document.getElementById('preview-video');
+  const fileInfo = document.getElementById('file-info');
+  const box = document.getElementById('progress-box');
+  const bar = document.getElementById('progress-bar');
+  const text = document.getElementById('progress-text');
+  const btn = document.getElementById('upload-btn');
+  const errBox = document.getElementById('upload-error');
+
+  const fmt = b => b >= 1073741824 ? (b / 1073741824).toFixed(2) + ' Go'
+                 : (b / 1048576).toFixed(1) + ' Mo';
+
+  // Aperçu dès que le fichier est choisi
+  input.addEventListener('change', () => {
+    const f = input.files[0];
+    if (!f) { preview.style.display = 'none'; return; }
+    if (previewVideo.src) URL.revokeObjectURL(previewVideo.src);
+    previewVideo.src = URL.createObjectURL(f);
+    fileInfo.textContent = f.name + ' : ' + fmt(f.size);
+    preview.style.display = 'block';
+    errBox.style.display = 'none';
+  });
+
+  // Envoi avec progression
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const f = input.files[0];
+    if (!f) return;
+    if (f.size > 2 * 1024 * 1024 * 1024) {
+      errBox.textContent = 'Fichier trop gros (2 Go maximum)';
+      errBox.style.display = 'block';
+      return;
+    }
+
+    const showError = msg => {
+      errBox.textContent = msg;
+      errBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Uploader l\'épisode';
+      box.style.display = 'none';
+    };
+
+    const xhr = new XMLHttpRequest();
+    const start = Date.now();
+    xhr.open('POST', '/admin/anime/<%= anime.id %>/episodes');
+
+    xhr.upload.onprogress = ev => {
+      if (!ev.lengthComputable) return;
+      const pct = Math.round((ev.loaded / ev.total) * 100);
+      const secs = (Date.now() - start) / 1000;
+      const speed = secs > 0 ? ev.loaded / secs : 0;
+      bar.style.width = pct + '%';
+      text.textContent = pct + ' % : ' + fmt(ev.loaded) + ' / ' + fmt(ev.total) +
+        (speed ? ' (' + (speed / 1048576).toFixed(1) + ' Mo/s)' : '');
+      if (pct === 100) text.textContent = 'Envoi terminé, traitement en cours...';
+    };
+
+    xhr.onload = () => {
+      let res = {};
+      try { res = JSON.parse(xhr.responseText); } catch (err) {}
+      if (xhr.status === 200 && res.ok) {
+        window.location = res.redirect;
+      } else {
+        showError(res.error || 'Erreur pendant l\'envoi (code ' + xhr.status + ')');
+      }
+    };
+    xhr.onerror = () => showError('Connexion interrompue pendant l\'envoi');
+    xhr.ontimeout = () => showError('Délai dépassé, réessaie');
+
+    box.style.display = 'block';
+    bar.style.width = '0%';
+    text.textContent = '0 %';
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours... ne ferme pas la page';
+    errBox.style.display = 'none';
+    xhr.send(new FormData(form));
+  });
+</script>
+<%- include('partials/footer') %>
