@@ -1,0 +1,47 @@
+<%- include('partials/header', { title: 'Épisodes' }) %>
+<a href="/admin" class="muted">← Retour</a>
+<h1>Épisodes : <%= anime.title %></h1>
+
+<% if (ok) { %><p class="notice"><%= ok %></p><% } %>
+<% if (error) { %><p class="error"><%= error %></p><% } %>
+
+<form method="POST" action="/admin/anime/<%= anime.id %>/episodes" class="auth-form wide">
+  <input type="number" name="number" placeholder="Numéro de l'épisode" min="1" required>
+  <input name="title" placeholder="Titre (optionnel)">
+
+  <label class="muted small">Lien pour REGARDER la vidéo</label>
+  <input type="url" name="video" placeholder="https://files.catbox.moe/xxxx.mp4" required>
+
+  <label class="muted small">Lien de TÉLÉCHARGEMENT (optionnel)</label>
+  <input type="url" name="download_url" placeholder="Laisse vide pour utiliser le même lien que la vidéo">
+
+  <p class="muted small">
+    Liens acceptés pour regarder : <strong>Catbox</strong> (.mp4), <strong>Google Drive</strong> (partage « Tous les utilisateurs disposant du lien »),
+    <strong>YouTube</strong>, <strong>Streamable</strong>, <strong>Dailymotion</strong> ou tout lien direct .mp4.
+    Le lien de téléchargement peut être le même ou un autre, il ouvre le téléchargement directement.
+  </p>
+  <button class="btn">Ajouter l'épisode</button>
+</form>
+
+<table class="table">
+  <tr><th>#</th><th>Titre</th><th>Vidéo</th><th>Téléchargement</th><th></th></tr>
+  <% episodes.forEach(e => { const v = videoInfo(e.video, e.download_url); %>
+    <tr>
+      <td><%= e.number %></td>
+      <td><%= e.title || '-' %></td>
+      <td class="small"><a href="<%= e.video %>" target="_blank" rel="noopener"><%= v.source %></a></td>
+      <td>
+        <form method="POST" action="/admin/episode/<%= e.id %>/download" class="dl-edit">
+          <input type="url" name="download_url" value="<%= e.download_url || '' %>" placeholder="<%= v.download ? 'Par défaut : même lien' : 'Aucun' %>">
+          <button class="btn small-btn">OK</button>
+        </form>
+      </td>
+      <td>
+        <form method="POST" action="/admin/episode/<%= e.id %>/delete" onsubmit="return confirm('Supprimer cet épisode ?')">
+          <button class="link-danger">Supprimer</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+</table>
+<%- include('partials/footer') %>

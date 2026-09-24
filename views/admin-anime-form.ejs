@@ -1,0 +1,21 @@
+<%- include('partials/header', { title: 'Formulaire anime' }) %>
+<h1><%= anime && anime.id ? 'Modifier' : 'Nouvel' %> anime</h1>
+
+<% if (error) { %><p class="error"><%= error %></p><% } %>
+
+<form method="POST"
+      action="<%= anime && anime.id ? '/admin/anime/' + anime.id : '/admin/anime' %>" class="auth-form wide">
+  <input name="title" placeholder="Titre" value="<%= anime && anime.title ? anime.title : '' %>" required>
+  <textarea name="synopsis" placeholder="Synopsis" rows="5"><%= anime && anime.synopsis ? anime.synopsis : '' %></textarea>
+  <input name="genres" placeholder="Genres séparés par des virgules (Action, Shonen, Aventure)" value="<%= anime && anime.genres ? anime.genres : '' %>">
+  <input type="number" name="year" placeholder="Année" value="<%= anime && anime.year ? anime.year : '' %>">
+  <select name="status">
+    <% ['En cours', 'Terminé'].forEach(s => { %>
+      <option <%= anime && anime.status === s ? 'selected' : '' %>><%= s %></option>
+    <% }) %>
+  </select>
+  <input type="url" name="cover" placeholder="Lien de l'image de couverture (https://files.catbox.moe/xxxx.jpg)" value="<%= anime && anime.cover ? anime.cover : '' %>">
+  <p class="muted small">Envoie ton image sur Catbox, puis colle ici le lien direct (.jpg, .png ou .webp).</p>
+  <button class="btn">Enregistrer</button>
+</form>
+<%- include('partials/footer') %>
