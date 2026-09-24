@@ -1,0 +1,54 @@
+<%- include('partials/header', { title: anime.title + ' - Ép. ' + episode.number }) %>
+<% const v = videoInfo(episode.video, episode.download_url); %>
+
+<a href="/anime/<%= anime.id %>" class="muted">← <%= anime.title %></a>
+<h1>Épisode <%= episode.number %><%= episode.title ? ' - ' + episode.title : '' %></h1>
+
+<div class="player-wrap">
+  <% if (v.type === 'iframe') { %>
+    <div class="embed">
+      <iframe src="<%= v.src %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>
+  <% } else { %>
+    <video class="player" controls playsinline preload="metadata" controlsList="nodownload">
+      <source src="<%= v.src %>">
+      Ton navigateur ne supporte pas la lecture vidéo.
+    </video>
+  <% } %>
+
+  <% if (v.download) { %>
+    <!-- Flèche visible pendant la lecture -->
+    <a class="dl-float" href="<%= v.download %>" target="_blank" rel="noopener" title="Télécharger l'épisode" aria-label="Télécharger l'épisode">⬇</a>
+  <% } %>
+</div>
+
+<p class="muted small">Source : <%= v.source %></p>
+
+<p class="btn-row">
+  <% if (v.download) { %>
+    <a class="btn" href="<%= v.download %>" target="_blank" rel="noopener" download>⬇ Télécharger l'épisode</a>
+  <% } else { %>
+    <span class="muted small">Le téléchargement n'est pas disponible pour cet épisode.</span>
+  <% } %>
+</p>
+
+<p class="muted small ios-tip" style="display:none">
+  📱 iPhone : le fichier arrive dans l'app <strong>Fichiers</strong> (dossier Téléchargements).
+  Pour l'avoir dans la Galerie : ouvre-le, appuie sur Partager, puis « Enregistrer la vidéo ».
+</p>
+
+<h2>Autres épisodes</h2>
+<div class="episodes">
+  <% episodes.forEach(e => { %>
+    <a class="ep <%= e.id === episode.id ? 'active' : '' %>" href="/watch/<%= e.id %>">Ép. <%= e.number %></a>
+  <% }) %>
+</div>
+
+<script>
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    document.querySelector('.ios-tip').style.display = 'block';
+  }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,61 @@
+<%- include('partials/header', { title: anime.title }) %>
+
+<section class="detail">
+  <img class="cover" src="<%= anime.cover || '/no-cover.svg' %>" alt="<%= anime.title %>">
+  <div>
+    <h1><%= anime.title %></h1>
+    <p class="muted"><%= anime.genres %> • <%= anime.year || '?' %> • <%= anime.status %></p>
+    <p>⭐ <strong><%= anime.avg_score || '–' %></strong>/5 <span class="muted">(<%= anime.votes %> avis)</span></p>
+    <p><%= anime.synopsis %></p>
+
+    <% if (user) { %>
+      <form method="POST" action="/anime/<%= anime.id %>/rate" class="inline-form">
+        <label>Ma note :</label>
+        <select name="score">
+          <% for (let i = 5; i >= 1; i--) { %>
+            <option value="<%= i %>" <%= myRating === i ? 'selected' : '' %>><%= i %> ★</option>
+          <% } %>
+        </select>
+        <button class="btn">Noter</button>
+      </form>
+    <% } else { %>
+      <p class="muted small"><a href="/login"><u>Connecte-toi</u></a> pour noter et commenter.</p>
+    <% } %>
+  </div>
+</section>
+
+<h2>Épisodes</h2>
+<div class="ep-list">
+  <% if (!episodes.length) { %><p class="muted">Aucun épisode pour le moment.</p><% } %>
+  <% episodes.forEach(e => { const v = videoInfo(e.video, e.download_url); %>
+    <div class="ep-row">
+      <a class="ep" href="/watch/<%= e.id %>">▶ Épisode <%= e.number %><%= e.title ? ' - ' + e.title : '' %></a>
+      <% if (v.download) { %>
+        <a class="ep dl" href="<%= v.download %>" target="_blank" rel="noopener" title="Télécharger">⬇</a>
+      <% } %>
+    </div>
+  <% }) %>
+</div>
+
+<h2>Commentaires</h2>
+<% if (user) { %>
+  <form method="POST" action="/anime/<%= anime.id %>/comment" class="comment-form">
+    <textarea name="content" maxlength="1000" placeholder="Ton avis..." required></textarea>
+    <button class="btn">Publier</button>
+  </form>
+<% } %>
+
+<% comments.forEach(c => { %>
+  <div class="comment">
+    <strong><%= c.username %></strong>
+    <span class="muted small"><%= c.created_at %></span>
+    <p><%= c.content %></p>
+    <% if (user && ['admin','owner'].includes(user.role)) { %>
+      <form method="POST" action="/comment/<%= c.id %>/delete">
+        <button class="link-danger">Supprimer</button>
+      </form>
+    <% } %>
+  </div>
+<% }) %>
+
+<%- include('partials/footer') %>
