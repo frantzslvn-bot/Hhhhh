@@ -1,0 +1,31 @@
+<%- include('partials/header', { title: 'Accueil' }) %>
+
+<form class="search" method="GET" action="/">
+  <input type="text" name="q" placeholder="Rechercher un anime..." value="<%= q %>">
+  <select name="genre">
+    <option value="">Tous les genres</option>
+    <% genres.forEach(g => { %>
+      <option value="<%= g %>" <%= g === genre ? 'selected' : '' %>><%= g %></option>
+    <% }) %>
+  </select>
+  <button class="btn">Filtrer</button>
+</form>
+
+<% if (!animes.length) { %>
+  <p class="muted">Aucun anime trouvé.</p>
+<% } %>
+
+<div class="grid">
+  <% animes.forEach(a => { %>
+    <a class="card" href="/anime/<%= a.id %>">
+      <img src="<%= a.cover || '/no-cover.svg' %>" alt="<%= a.title %>" loading="lazy" referrerpolicy="no-referrer">
+      <div class="card-body">
+        <h3><%= a.title %></h3>
+        <p class="muted small"><%= a.genres %></p>
+        <p class="small">⭐ <%= a.avg_score || '–' %> <span class="muted">(<%= a.votes %>)</span></p>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<%- include('partials/footer') %>
